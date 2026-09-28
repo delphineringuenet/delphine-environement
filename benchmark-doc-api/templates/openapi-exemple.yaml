@@ -1,0 +1,120 @@
+# Exemple d'annotation OpenAPI : les champs commentés alimentent directement
+# le rendu de la référence dans les outils benchmarkés (Redocly, Scalar,
+# Docusaurus, Mintlify, ReadMe...).
+openapi: 3.1.0
+info:
+  title: API <Nom>
+  version: 1.4.0
+  description: |
+    Description générale de l'API (Markdown supporté).
+    Voir le [Quickstart](https://developers.<domaine>.com/quickstart).
+  contact:
+    name: Support développeurs
+    url: https://developers.<domaine>.com/support
+servers:
+  - url: https://sandbox.api.<domaine>.com/v1
+    description: Sandbox
+  - url: https://api.<domaine>.com/v1
+    description: Production
+tags:
+  # Les tags structurent la navigation de la référence
+  - name: Clients
+    description: Gestion des clients.
+security:
+  - bearerAuth: []
+paths:
+  /customers:
+    post:
+      tags: [Clients]
+      operationId: createCustomer
+      summary: Créer un client          # Titre affiché (≤ 60 caractères)
+      description: |                     # Explication fonctionnelle
+        Crée un client. Émet l'événement webhook `customer.created`.
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema: { type: string }
+          description: Clé unique permettant de rejouer la requête sans doublon.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CustomerCreate' }
+            examples:                    # Exemples affichés dans la colonne de droite
+              minimal:
+                summary: Création minimale
+                value: { email: jeanne@example.com }
+      responses:
+        '201':
+          description: Client créé.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Customer' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+      x-codeSamples:                     # Exemples de code multi-langages (Redocly, Scalar...)
+        - lang: JavaScript
+          label: Node.js
+          source: |
+            const customer = await client.customers.create({ email: 'jeanne@example.com' });
+        - lang: Python
+          source: |
+            customer = client.customers.create(email="jeanne@example.com")
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    CustomerCreate:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+          description: Adresse e-mail du client.
+          example: jeanne@example.com
+        metadata:
+          type: object
+          maxProperties: 50
+          additionalProperties: { type: string }
+          description: Paires clé/valeur libres.
+    Customer:
+      allOf:
+        - $ref: '#/components/schemas/CustomerCreate'
+        - type: object
+          properties:
+            id:
+              type: string
+              description: Identifiant unique, préfixé `cus_`.
+              example: cus_8f2k3
+            status:
+              type: string
+              enum: [active, suspended, closed]
+            created_at:
+              type: string
+              format: date-time
+    Problem:
+      type: object
+      description: Erreur au format RFC 9457.
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        code: { type: string }
+        detail: { type: string }
+        request_id: { type: string }
+  responses:
+    ValidationError:
+      description: Paramètre invalide.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Unauthorized:
+      description: Authentification manquante ou invalide.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
