@@ -1,6 +1,8 @@
 # Benchmark des templates de documentation API — Portail développeur
 
 > Objectif : identifier les meilleures pratiques de structure et de présentation de la documentation API, comparer les outils capables de les produire, et en déduire un **template cible** pour notre portail développeur.
+>
+> 👉 **Focus sur la documentation d'un endpoint (informations nécessaires, benchmark, checklist) : [`bonne-doc-endpoint.md`](bonne-doc-endpoint.md)**
 
 ---
 
